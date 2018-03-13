@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">MapApp</string>
+    <string name="title_activity_maps">Map</string>
+    <string name="access_token" translatable="false">pk.eyJ1IjoibGluemgxMDciLCJhIjoiY2plamVibHZnM3d2ZzMzbzF1cDEyOTIzbyJ9.R89rnwkr-3fIBKicK7T6aw</string>
+    <string name="version_name">Version</string>
+    <string name="can_not_find_version_name">Can\'t get the version of app</string>
+</resources>

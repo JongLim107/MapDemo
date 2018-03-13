@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <!--有边框的白色圆角背景 边框颜色会灰色 -->
+
+    <!-- 填充颜色 -->
+    <solid android:color="@color/white"/>
+    <!-- 矩形的圆角半径 -->
+    <stroke
+        android:color="@color/blue_light"
+        android:width="@dimen/line_view"
+        />
+
+    <corners android:radius="3dp" />
+
+</shape>
