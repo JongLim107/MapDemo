@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>WMS GetFeatureInfo (Tile Layer)</title>
+    <link rel="stylesheet" href="https://openlayers.org/en/v4.6.4/css/ol.css" type="text/css">
+    <!-- The line below is only needed for old environments like Internet Explorer and Android 4.x -->
+    <script src="https://cdn.polyfill.io/v2/polyfill.min.js?features=requestAnimationFrame,Element.prototype.classList,URL"></script>
+    <script src="https://openlayers.org/en/v4.6.4/build/ol.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <style>
+        .ol-popup {
+            position: absolute;
+            background-color: white;
+            -webkit-filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.2));
+            filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.2));
+            padding: 15px;
+            border-radius: 10px;
+            border: 1px solid #cccccc;
+            bottom: 12px;
+            left: -50px;
+            min-width: 280px;
+        }
+
+        .ol-popup:after, .ol-popup:before {
+            top: 100%;
+            border: solid transparent;
+            content: " ";
+            height: 0;
+            width: 0;
+            position: absolute;
+            pointer-events: none;
+        }
+
+        .ol-popup:after {
+            border-top-color: white;
+            border-width: 10px;
+            left: 48px;
+            margin-left: -10px;
+        }
+
+        .ol-popup:before {
+            border-top-color: #cccccc;
+            border-width: 11px;
+            left: 48px;
+            margin-left: -11px;
+        }
+
+        .ol-popup-closer {
+            text-decoration: none;
+            position: absolute;
+            top: 2px;
+            right: 8px;
+        }
+
+        .ol-popup-closer:after {
+            content: "✖";
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container-fluid">
+    <div class="row-fluid">
+        <div class="span12">
+            <div id="map" class="map"></div>
+            <div id="popup" class="ol-popup">
+                <a href="#" id="popup-closer" class="ol-popup-closer"></a>
+                <div id="popup-content"></div>
+            </div>
+        </div>
+    </div>
+    <script>
+        var container = document.getElementById('popup');
+        var content = document.getElementById('popup-content');
+        var closer = document.getElementById('popup-closer');
+
+
+        /**
+         * Add a click handler to hide the popup.
+         * @return {boolean} Don't follow the href.
+         */
+        closer.onclick = function () {
+            overlay.setPosition(undefined);
+            closer.blur();
+            return false;
+        };
+
+        /**
+         * Create an overlay to anchor the popup to the map.
+         */
+        var overlay = new ol.Overlay({
+            element: container,
+            autoPan: true,
+            autoPanAnimation: {
+                duration: 250
+            }
+        });
+        /**
+         * Add a click handler to hide the popup.
+         * @return {boolean} Don't follow the href.
+         */
+        closer.onclick = function () {
+            overlay.setPosition(undefined);
+            closer.blur();
+            return false;
+        };
+
+
+        var wmsSource = new ol.source.TileWMS({
+            url: 'http://192.168.65.43:8080/geoserver/myWorkspace/wms',
+            params: {'LAYERS': 'myWorkspace:ais_shape', 'TILED': true},
+            serverType: 'geoserver',
+            crossOrigin: 'anonymous'
+        });
+
+        var wmsLayer = new ol.layer.Tile({
+            source: wmsSource
+        });
+
+        var view = new ol.View({
+            center: ol.proj.transform([0, 0], 'EPSG:4326', 'EPSG:3857'),
+            maxZoom: 15,
+            minZoom: 2,
+            zoom: 2
+        })
+
+        var raster = new ol.layer.Tile({
+            source: new ol.source.OSM()
+        });
+
+
+        var map = new ol.Map({
+            target: 'map',
+            layers: [
+                raster,
+                wmsLayer
+            ],
+            view: view
+        });
+
+        map.addOverlay(overlay);
+
+        map.on('singleclick', function (evt) {
+            var viewResolution = /** @type {number} */ (view.getResolution());
+            console.log(evt.pixel);
+            console.log(view.calculateExtent());
+            alert(viewResolution)
+            var url = wmsSource.getGetFeatureInfoUrl(
+                evt.coordinate, viewResolution, 'EPSG:3857',
+                {'INFO_FORMAT': 'application/json'});
+            if (url) {
+                alert(evt.coordinate)
+                alert(url)
+                var parser = new ol.format.GeoJSON();
+                var coord;
+                $.ajax({
+                    url: url,
+
+                    dataType: 'json',
+                    success: function (response) {
+
+                        var result = parser.readFeatures(response);
+                        if (result.length) {
+                            var info2 = [];
+                            for (var i = 0, ii = result.length; i < ii; ++i) {
+                                var point = new ol.geom.Point(result[i].getGeometry().getCoordinates());
+                                point.transform("EPSG:900913", "EPSG:4326");
+                                coord = ol.proj.transform(result[i].getGeometry().getCoordinates(), "EPSG:900913", "EPSG:3857");
+                                info2.push('Name: ' + result[i].get('name'));
+                                info2.push('MMSI: ' + result[i].get('mmsi'));
+                                info2.push('Lat: ' + Math.round(point.getCoordinates()[1] * 100) / 100);
+                                info2.push('Lon: ' + Math.round(point.getCoordinates()[0] * 100) / 100);
+                            }
+
+                            content.innerHTML = '<p>' + info2[0] + '</p><p>' + info2[1] + '</p><p>' + info2[2] + '</p><p>' + info2[3] + '</p>';
+                            overlay.setPosition(coord);
+                        }
+                    }
+                });
+            }
+        });
+
+
+        map.on('pointermove', function (evt) {
+            if (evt.dragging) {
+                return;
+            }
+            var pixel = map.getEventPixel(evt.originalEvent);
+            var hit = map.forEachLayerAtPixel(pixel, function () {
+                return true;
+            });
+            map.getTargetElement().style.cursor = hit ? 'pointer' : '';
+        });
+    </script>
+</body>
+</html>

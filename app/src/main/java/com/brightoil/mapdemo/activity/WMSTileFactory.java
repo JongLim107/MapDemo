@@ -26,6 +26,8 @@ public class WMSTileFactory {
             "&layers=gis:filter_tug" + "&width=%d&height=%d&srs=EPSG:900913&format=image/png&transparent=true";
     private static final String WMS_FORMAT_CARGO = "http://http://192.168.48.107:8080/geoserver" + "/gis/wms?service=WMS&version=1.1.1&request=GetMap" +
             "&layers=gis:filter_cargo" + "&width=%d&height=%d&srs=EPSG:3857&format=image/png&transparent=true";
+    private static final String WMS_FORMAT_CARGO1 = "http://192.168.48.107:8080/geoserver" + "/gwc/demo/gis:live_cargo?" +
+            "gridSet=EPSG:4326&format=application/x-protobuf;type=mapbox-vector";
     private static final String WMS_FORMAT_TANKER = "http://http://192.168.48.107:8080/geoserver" + "/gis/wms?service=WMS&version=1.1.1&request=GetMap" +
             "&layers=gis:filter_tanker" + "&width=%d&height=%d&srs=EPSG:900913&format=image/png&transparent=true";
 

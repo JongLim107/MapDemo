@@ -16,7 +16,7 @@ import com.brightoil.mapdemo.activity.R;
  * Created by haizhong.lan on 7/18/2017.
  */
 
-public class InvertedTriangleView extends View {
+public class TriangleView extends View {
 
     private @ColorInt int lineColor;
 
@@ -25,23 +25,23 @@ public class InvertedTriangleView extends View {
     private Paint paint = new Paint();
     private Path path = new Path();
 
-    public InvertedTriangleView(Context context) {
+    public TriangleView(Context context) {
         this(context, null);
     }
 
-    public InvertedTriangleView(Context context, @Nullable AttributeSet attrs) {
+    public TriangleView(Context context, @Nullable AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public InvertedTriangleView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
+    public TriangleView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init(context, attrs, defStyleAttr);
     }
 
     private void init(Context context, AttributeSet attrs, int defStyleAttr) {
-        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.InvertedTriangleView);
-        lineColor = a.getColor(R.styleable.InvertedTriangleView_line_color, context.getResources().getColor(R.color.white));
-        solidColor = a.getColor(R.styleable.InvertedTriangleView_solid_color, context.getResources().getColor(R.color.white));
+        TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.TriangleView);
+        lineColor = a.getColor(R.styleable.TriangleView_line_color, context.getResources().getColor(R.color.white));
+        solidColor = a.getColor(R.styleable.TriangleView_solid_color, context.getResources().getColor(R.color.white));
         a.recycle();
     }
 

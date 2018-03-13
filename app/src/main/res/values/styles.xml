@@ -120,7 +120,7 @@
 
     </declare-styleable>
 
-    <declare-styleable name="InvertedTriangleView">
+    <declare-styleable name="TriangleView">
         <attr name="line_color" format="color" />
         <attr name="solid_color" format="color" />
     </declare-styleable>

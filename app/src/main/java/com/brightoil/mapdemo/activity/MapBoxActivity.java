@@ -16,6 +16,7 @@ import com.brightoil.mapdemo.network.MyCallback;
 import com.brightoil.mapdemo.network.MyRequestManager;
 import com.mapbox.mapboxsdk.annotations.Icon;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
+import com.mapbox.mapboxsdk.annotations.InfoWindow;
 import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.geometry.LatLng;
@@ -61,11 +62,11 @@ public class MapBoxActivity extends FragmentActivity implements OnMapReadyCallba
     private Switch mSwitchTanker;
     private MarkerInfoAdapter mInfoAdapter;
     private MarkerInfoHolder mPopupHolder;
+    private InfoWindow mInfoWindow;
 
     class MarkerInfoAdapter implements MapboxMap.InfoWindowAdapter {
         private View windowView;
 
-        @Nullable
         @Override
         public View getInfoWindow(@NonNull Marker marker) {
             return windowView;
@@ -199,16 +200,15 @@ public class MapBoxActivity extends FragmentActivity implements OnMapReadyCallba
     @Override
     public void onMapReady(MapboxMap mapboxMap) {
         mMap = mapboxMap;
-        mInfoAdapter = new MarkerInfoAdapter();
-        mMap.setInfoWindowAdapter(mInfoAdapter);
-        mProvider = WMSTileFactory.getWMSTileProvider(WMSTileFactory.TPType.normal, tileXSize, tileYSize);
-        onCheckedChanged(mSwitchTug, true);
         mMap.addOnMapClickListener(this);
+        mProvider = WMSTileFactory.getWMSTileProvider(WMSTileFactory.TPType.normal, tileXSize, tileYSize);
+        onCheckedChanged(mSwitchCargo, true);
     }
 
     @Override
     public void onMapClick(@NonNull LatLng point) {
         if (mMapMarker != null) {
+            mMap.removeMarker(mMapMarker);
             mMapMarker.remove();
         }
 
@@ -249,6 +249,7 @@ public class MapBoxActivity extends FragmentActivity implements OnMapReadyCallba
     public boolean onMarkerClick(@NonNull Marker marker) {
         if (mMapMarker != null) {
             mMapMarker.remove();
+            mMap.removeMarker(mMapMarker);
         }
         return true;
     }
@@ -262,16 +263,20 @@ public class MapBoxActivity extends FragmentActivity implements OnMapReadyCallba
         LatLng latLng = new LatLng(lat, lng);
         feature.setGeometryCoordinate(lng, lat);
 
-        Icon icon = IconFactory.getInstance(this).fromResource(R.drawable.vessel_marker);
-        mMapMarker = mMap.addMarker(new MarkerOptions().position(latLng).icon(icon));
         if (mPopupHolder == null) {
             mPopupHolder = new MarkerInfoHolder(this);
         }
         mPopupHolder.setBean(feature);
 
+        mInfoAdapter = new MarkerInfoAdapter();
         mInfoAdapter.setWindowView(mPopupHolder.getRoot());
+        mMap.setInfoWindowAdapter(mInfoAdapter);
+
+        Icon icon = IconFactory.getInstance(this).fromResource(R.drawable.vessel_marker);
+        mMapMarker = mMap.addMarker(new MarkerOptions().position(latLng).icon(icon));
         if (!mMapMarker.isInfoWindowShown()) {
             mMapMarker.showInfoWindow(mMap, mapView);
         }
+
     }
 }

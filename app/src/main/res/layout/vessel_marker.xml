@@ -91,7 +91,7 @@
             app:value_text="Singapore"/>
     </LinearLayout>
 
-    <com.brightoil.mapdemo.widgets.InvertedTriangleView
+    <com.brightoil.mapdemo.widgets.TriangleView
         android:id="@+id/arrow"
         android:layout_width="28dp"
         android:layout_height="26dp"
