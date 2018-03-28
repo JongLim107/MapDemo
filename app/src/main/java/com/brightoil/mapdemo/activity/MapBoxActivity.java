@@ -3,8 +3,8 @@ package com.brightoil.mapdemo.activity;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
+import android.util.ArraySet;
 import android.util.Log;
 import android.view.View;
 import android.widget.CompoundButton;
@@ -34,6 +34,10 @@ import com.mapbox.mapboxsdk.style.sources.VectorSource;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.Set;
 
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.fillColor;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.fillOpacity;
@@ -47,16 +51,16 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineWidth;
  */
 
 
-public class MapBoxActivity extends FragmentActivity implements OnMapReadyCallback, MapboxMap.OnMapClickListener, MapboxMap.OnMarkerClickListener, CompoundButton
-        .OnCheckedChangeListener {
+public class MapBoxActivity extends FragmentActivity
+        implements OnMapReadyCallback, MapboxMap.OnMapClickListener, MapboxMap.OnMarkerClickListener, CompoundButton.OnCheckedChangeListener {
     private MapView mapView;
     private MapboxMap mMap;
     private Marker mMapMarker;
 
-    private int tileXSize = 256;
-    private int tileYSize = 256;
+    private int tileSize = 256;
     private WMSTileProvider mProvider;
 
+    private Switch mSwitchDef;
     private Switch mSwitchTug;
     private Switch mSwitchCargo;
     private Switch mSwitchTanker;
@@ -72,7 +76,7 @@ public class MapBoxActivity extends FragmentActivity implements OnMapReadyCallba
             return windowView;
         }
 
-        public void setWindowView(View windowView) {
+        void setWindowView(View windowView) {
             this.windowView = windowView;
         }
     }
@@ -86,6 +90,9 @@ public class MapBoxActivity extends FragmentActivity implements OnMapReadyCallba
         mapView.onCreate(savedInstanceState);
         mapView.getMapAsync(this);
 
+
+        mSwitchDef = findViewById(R.id.swShip);
+        mSwitchDef.setOnCheckedChangeListener(this);
         mSwitchTug = findViewById(R.id.swTug);
         mSwitchTug.setOnCheckedChangeListener(this);
         mSwitchCargo = findViewById(R.id.swCargo);
@@ -138,61 +145,86 @@ public class MapBoxActivity extends FragmentActivity implements OnMapReadyCallba
 
     @Override
     public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-        if (compoundButton.getId() == mSwitchTug.getId()) {
 
-            /* GeoJsonSource */
-            if (mSwitchTug.isChecked()) {
-                try {
-                    URL geoJsonUrl = new URL("https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_urban_areas.geojson");
-                    //URL geoJsonUrl = new URL("http://192.168.65.43:8080/geoserver/myWorkspace/wms?layers=myWorkspace:ais_shape&srs=EPSG:4326&format
-                    // =application%2Fjson%3Btype%2Fgeojson");
-                    GeoJsonSource urbanAreasSource = new GeoJsonSource("urban-areas", geoJsonUrl);
-                    mMap.addSource(urbanAreasSource);
+        switch (compoundButton.getId()) {
 
-                    FillLayer urbanArea = new FillLayer("urban-areas-fill", "urban-areas");
+            case R.id.swTug: {
+                /* GeoJsonSource */
+                if (mSwitchTug.isChecked()) {
+                    try {
+                        URL geoJsonUrl = new URL("https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_urban_areas.geojson");
+                        //URL geoJsonUrl = new URL("http://192.168.65.43:8080/geoserver/myWorkspace/wms?layers=myWorkspace:ais_shape&srs=EPSG:4326&format
+                        // =application%2Fjson%3Btype%2Fgeojson");
+                        GeoJsonSource urbanAreasSource = new GeoJsonSource("urban-areas", geoJsonUrl);
+                        mMap.addSource(urbanAreasSource);
 
-                    urbanArea.setProperties(fillColor(Color.parseColor("#ff0088")), fillOpacity(0.4f));
+                        FillLayer urbanArea = new FillLayer("urban-areas-fill", "urban-areas");
 
-                    mMap.addLayerBelow(urbanArea, "water");
-                } catch (MalformedURLException malformedUrlException) {
-                    malformedUrlException.printStackTrace();
+                        urbanArea.setProperties(fillColor(Color.parseColor("#ff0088")), fillOpacity(0.4f));
+
+                        mMap.addLayerBelow(urbanArea, "water");
+                    } catch (MalformedURLException malformedUrlException) {
+                        malformedUrlException.printStackTrace();
+                    }
+                } else {
+                    mMap.removeLayer("urban-areas-fill");
+                    mMap.removeSource("urban-areas");
                 }
-            } else {
-                mMap.removeLayer("urban-areas-fill");
-                mMap.removeSource("urban-areas");
+                break;
             }
 
-        } else if (compoundButton.getId() == mSwitchCargo.getId()) {
+            case R.id.swCargo: {
+                /* RasterSource WmsSource */
+                if (mSwitchCargo.isChecked()) {
+                    String tiles = WMSTileFactory.getMapboxTile(WMSTileFactory.cargo, tileSize);
+                    TileSet ts = new TileSet("tileset", tiles);
+                    RasterSource webMapSource = new RasterSource("web-map-source-cargo", ts, tileSize);
+                    mMap.addSource(webMapSource);
 
-            /* RasterSource WmsSource */
-            if (mSwitchCargo.isChecked()) {
-                RasterSource webMapSource = new RasterSource("web-map-source",
-                        new TileSet("tileset", String.format(WMSTileFactory.mapboxUrl, tileXSize, tileXSize)), tileXSize);
-                mMap.addSource(webMapSource);
-
-                // Add the web map source to the map.
-                RasterLayer webMapLayer = new RasterLayer("web-map-layer", "web-map-source");
-                mMap.addLayerBelow(webMapLayer, "aeroway-taxiway");
-            } else {
-                mMap.removeLayer("web-map-layer");
-                mMap.removeSource("web-map-source");
+                    // Add the web map source to the map.
+                    RasterLayer webMapLayer = new RasterLayer("web-map-layer-cargo", "web-map-source-cargo");
+                    mMap.addLayerBelow(webMapLayer, "aeroway-taxiway");
+                } else {
+                    mMap.removeLayer("web-map-layer-cargo");
+                    mMap.removeSource("web-map-source-cargo");
+                }
+                break;
             }
-        } else if (compoundButton.getId() == mSwitchTanker.getId()) {
 
-            /* VectorSource */
-            if (mSwitchTanker.isChecked()) {
-                VectorSource vectorSource = new VectorSource("terrain-data", "mapbox://mapbox.mapbox-terrain-v2");
-                mMap.addSource(vectorSource);
+            case R.id.swTanker: {
+                /* VectorSource */
+                if (mSwitchTanker.isChecked()) {
+                    String tiles = WMSTileFactory.getMapboxTile(WMSTileFactory.tanker, tileSize);
+                    TileSet ts = new TileSet("tileset", tiles);
+                    RasterSource webMapSource = new RasterSource("web-map-source-tanker", ts, tileSize);
+                    mMap.addSource(webMapSource);
 
-                LineLayer terrainData = new LineLayer("terrain-data", "terrain-data");
-                terrainData.setSourceLayer("contour");
-                terrainData.setProperties(lineJoin(Property.LINE_JOIN_ROUND), lineCap(Property.LINE_CAP_ROUND), lineColor(Color.parseColor("#ff69b4")),
-                        lineWidth(1f));
+                    // Add the web map source to the map.
+                    RasterLayer webMapLayer = new RasterLayer("web-map-layer-tanker", "web-map-source-tanker");
+                    mMap.addLayerBelow(webMapLayer, "aeroway-taxiway");
+                } else {
+                    mMap.removeLayer("web-map-layer-tanker");
+                    mMap.removeSource("web-map-source-tanker");
+                }
+                break;
+            }
 
-                mMap.addLayer(terrainData);
-            } else {
-                mMap.removeLayer("terrain-data");
-                mMap.removeSource("terrain-data");
+            default: {
+                /* RasterSource WmsSource */
+                if (mSwitchDef.isChecked()) {
+
+                    String tiles = WMSTileFactory.getMapboxTile(WMSTileFactory.vessels, tileSize);
+                    TileSet ts = new TileSet("tileset", tiles);
+                    RasterSource webMapSource = new RasterSource("web-map-source", ts, tileSize);
+                    mMap.addSource(webMapSource);
+
+                    // Add the web map source to the map.
+                    RasterLayer webMapLayer = new RasterLayer("web-map-layer", "web-map-source");
+                    mMap.addLayerBelow(webMapLayer, "aeroway-taxiway");
+                } else {
+                    mMap.removeLayer("web-map-layer");
+                    mMap.removeSource("web-map-source");
+                }
             }
         }
     }
@@ -201,8 +233,9 @@ public class MapBoxActivity extends FragmentActivity implements OnMapReadyCallba
     public void onMapReady(MapboxMap mapboxMap) {
         mMap = mapboxMap;
         mMap.addOnMapClickListener(this);
-        mProvider = WMSTileFactory.getWMSTileProvider(WMSTileFactory.TPType.normal, tileXSize, tileYSize);
-        onCheckedChanged(mSwitchCargo, true);
+        mProvider = WMSTileFactory.getTileProvider(tileSize);
+
+        onCheckedChanged(mSwitchDef, true);
     }
 
     @Override
@@ -225,8 +258,7 @@ public class MapBoxActivity extends FragmentActivity implements OnMapReadyCallba
         Log.v("JongLim", String.format("BBox Left/Bottom, Right/Top = (%.4f, %.4f, %.4f, %.4f)", bbox[0], bbox[1], bbox[2], bbox[3]));
 
         // resume ret array to store width & height
-        ret[2] = tileXSize;
-        ret[3] = tileYSize;
+        ret[2] = ret[3] = tileSize;
         MyRequestManager.getFeatureInfo(ret, bbox, new MyCallback<MapFeatureBean>(this, MapFeatureBean.class, "GetFeature Info...") {
             @Override
             public void onSucceed(MapFeatureBean body, int id) {

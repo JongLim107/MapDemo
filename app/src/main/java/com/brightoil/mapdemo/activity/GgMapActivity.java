@@ -1,5 +1,6 @@
 package com.brightoil.mapdemo.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
@@ -9,6 +10,9 @@ import com.brightoil.mapdemo.bean.Feature;
 import com.brightoil.mapdemo.bean.MapFeatureBean;
 import com.brightoil.mapdemo.network.MyCallback;
 import com.brightoil.mapdemo.network.MyRequestManager;
+import com.fm.openinstall.OpenInstall;
+import com.fm.openinstall.listener.AppWakeUpAdapter;
+import com.fm.openinstall.model.AppData;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
@@ -27,8 +31,18 @@ public class GgMapActivity extends FragmentActivity implements OnMapReadyCallbac
     private MarkerInfoHolder mPopupHolder;
     private MarkerInfoWindowAdapter mInfoWindowAdapter;
 
-    private int tileXSize = 256;
-    private int tileYSize = 256;
+    private int tileSize = 256;
+
+    AppWakeUpAdapter wakeUpAdapter = new AppWakeUpAdapter() {
+        @Override
+        public void onWakeUp(AppData appData) {
+            //获取渠道数据
+            String channelCode = appData.getChannel();
+            //获取绑定数据
+            String bindData = appData.getData();
+            Log.d("OpenInstall", "getWakeUp : wakeupData = " + appData.toString());
+        }
+    };
 
     class MarkerInfoWindowAdapter implements GoogleMap.InfoWindowAdapter {
         private View windowView;
@@ -55,6 +69,22 @@ public class GgMapActivity extends FragmentActivity implements OnMapReadyCallbac
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mapLayout);
         mapFragment.getMapAsync(this);
+
+        //获取唤醒参数
+        OpenInstall.getWakeUp(getIntent(), wakeUpAdapter);
+    }
+
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        // 此处要调用，否则App在后台运行时，会无法截获
+        OpenInstall.getWakeUp(intent, wakeUpAdapter);
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        wakeUpAdapter = null;
     }
 
     /**
@@ -77,11 +107,12 @@ public class GgMapActivity extends FragmentActivity implements OnMapReadyCallbac
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Center"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));*/
 
-        mProvider = WMSTileFactory.getWMSTileProvider(WMSTileFactory.TPType.normal, tileXSize, tileYSize);
+        mProvider = WMSTileFactory.getTileProvider(WMSTileFactory.vessels, tileSize);
         mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
-        mMap.addTileOverlay(new TileOverlayOptions().tileProvider(WMSTileFactory.getWMSTileProvider(WMSTileFactory.TPType.tug, tileXSize, tileYSize)));
-        mMap.addTileOverlay(new TileOverlayOptions().tileProvider(WMSTileFactory.getWMSTileProvider(WMSTileFactory.TPType.cargo, tileXSize, tileYSize)));
-        mMap.addTileOverlay(new TileOverlayOptions().tileProvider(WMSTileFactory.getWMSTileProvider(WMSTileFactory.TPType.tanker, tileXSize, tileYSize)));
+
+        mMap.addTileOverlay(new TileOverlayOptions().tileProvider(WMSTileFactory.getTileProvider(WMSTileFactory.tanker, tileSize)));
+        mMap.addTileOverlay(new TileOverlayOptions().tileProvider(WMSTileFactory.getTileProvider(WMSTileFactory.cargo, tileSize)));
+        mMap.addTileOverlay(new TileOverlayOptions().tileProvider(WMSTileFactory.getTileProvider(WMSTileFactory.tug, tileSize)));
 
         mMap.setOnMapClickListener(this);
         mMap.setOnMarkerClickListener(this);
@@ -114,8 +145,7 @@ public class GgMapActivity extends FragmentActivity implements OnMapReadyCallbac
         Log.v("JongLim", String.format("BBox Left/Bottom, Right/Top = (%.4f, %.4f, %.4f, %.4f)", bbox[0], bbox[1], bbox[2], bbox[3]));
 
         // resume ret array to store width & height
-        ret[2] = tileXSize;
-        ret[3] = tileYSize;
+        ret[2] = ret[3] = tileSize;
         MyRequestManager.getFeatureInfo(ret, bbox, new MyCallback<MapFeatureBean>(this, MapFeatureBean.class, "GetFeature Info...") {
             @Override
             public void onSucceed(MapFeatureBean body, int id) {

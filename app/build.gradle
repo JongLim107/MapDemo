@@ -2,12 +2,13 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 26
+    buildToolsVersion '26.0.3'
     defaultConfig {
         applicationId "com.brightoil.mapdemo"
         minSdkVersion 23
         targetSdkVersion 23
         versionCode 1
-        versionName "1.0"
+        versionName "1.0.1"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
     }
     buildTypes {
@@ -16,15 +17,25 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
-    sourceSets{
-        main{
+    sourceSets {
+        main {
             jniLibs.srcDir 'libs'
+        }
+    }
+
+    signingConfigs {
+        config {
+            keyAlias 'openinstall'
+            keyPassword '123456'
+            storeFile file('openinstall.jks')
+            storePassword '123456'
+            v2SigningEnabled true  //此处开启/关闭V2签名
         }
     }
 }
 
 dependencies {
-    implementation fileTree(dir: 'libs', include: ['*.jar'])
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:26.1.0'
     implementation 'com.google.android.gms:play-services-maps:11.8.0'
     testImplementation 'junit:junit:4.12'
@@ -34,4 +45,5 @@ dependencies {
     compile files('libs/BaiduLBS_Android.jar')
     compile 'com.google.code.gson:gson:2.8.2'
     implementation 'com.mapbox.mapboxsdk:mapbox-android-sdk:5.5.0'
+    compile files('libs/OpenInstall_v2.1.1.jar')
 }
