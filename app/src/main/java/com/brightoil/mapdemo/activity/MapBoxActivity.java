@@ -140,12 +140,7 @@ public class MapBoxActivity extends FragmentActivity
                 /* GeoJsonSource */
                 if (b) {
                     try {
-                        //URL geoJsonUrl = new URL("https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_urban_areas.geojson");
-                        URL geoJsonUrl = new URL(
-                                "http://192.168.48.107:8080/geoserver/gis/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=gis:live_sailing" +
-                                        "&maxFeatures=50&outputFormat=application/json");
-                        //URL geoJsonUrl = new URL("http://192.168.65.43:8080/geoserver/myWorkspace/wms?layers=myWorkspace:ais_shape&srs=EPSG:4326&format
-                        // =application%2Fjson%3Btype%2Fgeojson");
+                        URL geoJsonUrl = new URL("https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_urban_areas.geojson");
                         GeoJsonSource urbanAreasSource = new GeoJsonSource("urban-areas", geoJsonUrl);
                         mMapbox.addSource(urbanAreasSource);
 
@@ -164,6 +159,7 @@ public class MapBoxActivity extends FragmentActivity
                     mMapbox.removeSource("urban-areas");
                     layersList.remove(WMSTileFactory.tug);
                 }
+                //addTileOverlay(WMSTileFactory.tug, b);
                 break;
             }
 
@@ -174,13 +170,11 @@ public class MapBoxActivity extends FragmentActivity
             }
 
             case R.id.swTanker: {
-                /* VectorSource */
                 addTileOverlay(WMSTileFactory.tanker, b);
                 break;
             }
 
             default: {
-                /* RasterSource WmsSource */
                 addTileOverlay(WMSTileFactory.vessels, b);
             }
         }

@@ -18,7 +18,7 @@
         android:layout_marginBottom="@dimen/view_padding"
         android:layout_marginRight="@dimen/item_padding"
         android:gravity="center"
-        android:text="TUG "/>
+        android:text="GeoJson"/>
 
     <Switch
         android:id="@+id/swCargo"
@@ -29,7 +29,7 @@
         android:layout_marginBottom="@dimen/view_padding"
         android:layout_marginRight="@dimen/item_padding"
         android:gravity="center"
-        android:text="CARGO "/>
+        android:text="CARGO"/>
 
     <Switch
         android:id="@+id/swTanker"
@@ -40,7 +40,7 @@
         android:layout_marginBottom="@dimen/view_padding"
         android:layout_marginRight="@dimen/item_padding"
         android:gravity="center"
-        android:text="TANKER "/>
+        android:text="TANKER"/>
 
     <Switch
         android:id="@+id/swShip"
@@ -51,7 +51,7 @@
         android:layout_marginBottom="@dimen/view_padding"
         android:layout_marginRight="@dimen/item_padding"
         android:gravity="center"
-        android:text="SHIP "/>
+        android:text="SHIP"/>
 
 
 </RelativeLayout>
