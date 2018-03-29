@@ -3,6 +3,7 @@ package com.brightoil.mapdemo.activity;
 import android.app.Activity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import com.brightoil.mapdemo.bean.Feature;
@@ -21,8 +22,8 @@ public class MarkerInfoHolder {
     private LabelTextView ltvLatitude;
     private LabelTextView ltvMmsi;
 
-    MarkerInfoHolder(Activity activity) {
-        root = LayoutInflater.from(activity).inflate(R.layout.vessel_marker, null);
+    MarkerInfoHolder(Activity activity, ViewGroup p) {
+        root = LayoutInflater.from(activity).inflate(R.layout.vessel_marker, p);
         imgClose = (ImageView) root.findViewById(R.id.imgClose);
         ltvTitle = (LabelTextView) root.findViewById(R.id.ltvTitle);
         ltvLongitude = (LabelTextView) root.findViewById(R.id.ltvLongitude);

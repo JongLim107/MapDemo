@@ -23,10 +23,10 @@ import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 
-public class GgMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener, GoogleMap.OnMarkerClickListener {
+public class GgMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener, GoogleMap.OnInfoWindowClickListener {
 
-    private GoogleMap mMap;
-    private Marker mMapMarker;
+    private GoogleMap mGoogleMap;
+    private Marker mMarker;
     private WMSTileProvider mProvider;
     private MarkerInfoHolder mPopupHolder;
     private MarkerInfoWindowAdapter mInfoWindowAdapter;
@@ -98,51 +98,45 @@ public class GgMapActivity extends FragmentActivity implements OnMapReadyCallbac
      */
     @Override
     public void onMapReady(GoogleMap googleMap) {
-        mMap = googleMap;
+        mGoogleMap = googleMap;
         mInfoWindowAdapter = new MarkerInfoWindowAdapter();
-        mMap.setInfoWindowAdapter(mInfoWindowAdapter);
+        mGoogleMap.setInfoWindowAdapter(mInfoWindowAdapter);
 
         // Add a marker in Sydney and move the camera
         /*LatLng sydney = new LatLng(0, 0);
-        mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Center"));
-        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));*/
+        mGoogleMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Center"));
+        mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));*/
 
         mProvider = WMSTileFactory.getTileProvider(WMSTileFactory.vessels, tileSize);
-        mMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
+        mGoogleMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
 
-        mMap.addTileOverlay(new TileOverlayOptions().tileProvider(WMSTileFactory.getTileProvider(WMSTileFactory.tanker, tileSize)));
-        mMap.addTileOverlay(new TileOverlayOptions().tileProvider(WMSTileFactory.getTileProvider(WMSTileFactory.cargo, tileSize)));
-        mMap.addTileOverlay(new TileOverlayOptions().tileProvider(WMSTileFactory.getTileProvider(WMSTileFactory.tug, tileSize)));
+        mGoogleMap.addTileOverlay(new TileOverlayOptions().tileProvider(WMSTileFactory.getTileProvider(WMSTileFactory.tanker, tileSize)));
+        mGoogleMap.addTileOverlay(new TileOverlayOptions().tileProvider(WMSTileFactory.getTileProvider(WMSTileFactory.cargo, tileSize)));
+        mGoogleMap.addTileOverlay(new TileOverlayOptions().tileProvider(WMSTileFactory.getTileProvider(WMSTileFactory.tug, tileSize)));
 
-        mMap.setOnMapClickListener(this);
-        mMap.setOnMarkerClickListener(this);
-    }
-
-    @Override
-    public boolean onMarkerClick(Marker marker) {
-        if (mMapMarker != null) {
-            mMapMarker.remove();
-        }
-        return true;
+        mGoogleMap.setOnMapClickListener(this);
+        mGoogleMap.setOnInfoWindowClickListener(this);
     }
 
     @Override
     public void onMapClick(LatLng latLng) {
-        if (mMapMarker != null) {
-            mMapMarker.remove();
+        if (mMarker != null) {
+            mMarker.remove();
+            mMarker = null;
+            return;
         }
 
-        int zoomLevel = (int) mMap.getCameraPosition().zoom;
+        int zoomLevel = (int) mGoogleMap.getCameraPosition().zoom;
 
-        /** Get X,Y in meter unit */
+        /* Get X,Y in meter unit */
         int[] ret = mProvider.getBoundingBoxIJ(latLng, zoomLevel);
-        Log.v("JongLim", String.format("ZoomLevel = %d", zoomLevel));
-        Log.v("JongLim", String.format("XY inner box = (%d, %d)", ret[0], ret[1]));
+        //Log.v("JongLim", String.format("ZoomLevel = %d", zoomLevel));
+        //Log.v("JongLim", String.format("XY inner box = (%d, %d)", ret[0], ret[1]));
         //Log.v("JongLim", String.format("index of box = (%d, %d)", ret[2], ret[3]));
-        Log.v("JongLim", String.format("Click Point XY = (%d, %d)", ret[4], ret[5]));//the rang is -20037508.34 to 20037508.34
+        //Log.v("JongLim", String.format("Click Point XY = (%d, %d)", ret[4], ret[5]));//the rang is -20037508.34 to 20037508.34
 
         double[] bbox = mProvider.getBoundingBox(ret[2], ret[3], zoomLevel);
-        Log.v("JongLim", String.format("BBox Left/Bottom, Right/Top = (%.4f, %.4f, %.4f, %.4f)", bbox[0], bbox[1], bbox[2], bbox[3]));
+        //Log.v("JongLim", String.format("BBox Left/Bottom, Right/Top = (%.4f, %.4f, %.4f, %.4f)", bbox[0], bbox[1], bbox[2], bbox[3]));
 
         // resume ret array to store width & height
         ret[2] = ret[3] = tileSize;
@@ -164,9 +158,17 @@ public class GgMapActivity extends FragmentActivity implements OnMapReadyCallbac
         });
     }
 
+    @Override
+    public void onInfoWindowClick(Marker marker) {
+        if (mMarker != null) {
+            mMarker.remove();
+            mMarker = null;
+        }
+    }
+
     private void addMarker(Feature feature) {
         float[] point = feature.getGeometryCoordinate();
-        Log.d("JongLim", String.format("Features X,Y = (%f, %f)", point[0], point[1]));
+        //Log.d("JongLim", String.format("Features X,Y = (%f, %f)", point[0], point[1]));
 
         float lng = (float) WMSTileFactory.x2lon(point[0]);
         float lat = (float) WMSTileFactory.y2lat(point[1]);
@@ -174,22 +176,22 @@ public class GgMapActivity extends FragmentActivity implements OnMapReadyCallbac
         feature.setGeometryCoordinate(lng, lat);
 
         if (Math.abs(latLng.latitude) > 82) {
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, (float) 22));
+            mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, (float) 22));
         } else if (Math.abs(latLng.latitude) > 80) {
-            mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, (float) 20));
+            mGoogleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, (float) 20));
         } else {
-            mMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
+            mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(latLng));
         }
 
-        mMapMarker = mMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.fromResource(R.drawable.vessel_marker)));
+        mMarker = mGoogleMap.addMarker(new MarkerOptions().position(latLng).icon(BitmapDescriptorFactory.fromResource(R.drawable.vessel_marker)));
         if (mPopupHolder == null) {
-            mPopupHolder = new MarkerInfoHolder(this);
+            mPopupHolder = new MarkerInfoHolder(this, null);
         }
         mPopupHolder.setBean(feature);
 
         mInfoWindowAdapter.setWindowView(mPopupHolder.getRoot());
-        if (!mMapMarker.isInfoWindowShown()) {
-            mMapMarker.showInfoWindow();
+        if (!mMarker.isInfoWindowShown()) {
+            mMarker.showInfoWindow();
         }
     }
 

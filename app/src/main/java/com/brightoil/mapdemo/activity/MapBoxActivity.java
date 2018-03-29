@@ -3,8 +3,8 @@ package com.brightoil.mapdemo.activity;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentActivity;
-import android.util.ArraySet;
 import android.util.Log;
 import android.view.View;
 import android.widget.CompoundButton;
@@ -16,7 +16,6 @@ import com.brightoil.mapdemo.network.MyCallback;
 import com.brightoil.mapdemo.network.MyRequestManager;
 import com.mapbox.mapboxsdk.annotations.Icon;
 import com.mapbox.mapboxsdk.annotations.IconFactory;
-import com.mapbox.mapboxsdk.annotations.InfoWindow;
 import com.mapbox.mapboxsdk.annotations.Marker;
 import com.mapbox.mapboxsdk.annotations.MarkerOptions;
 import com.mapbox.mapboxsdk.geometry.LatLng;
@@ -24,27 +23,16 @@ import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.style.layers.FillLayer;
-import com.mapbox.mapboxsdk.style.layers.LineLayer;
-import com.mapbox.mapboxsdk.style.layers.Property;
 import com.mapbox.mapboxsdk.style.layers.RasterLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 import com.mapbox.mapboxsdk.style.sources.RasterSource;
 import com.mapbox.mapboxsdk.style.sources.TileSet;
-import com.mapbox.mapboxsdk.style.sources.VectorSource;
 
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.HashSet;
-import java.util.Set;
 
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.fillColor;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.fillOpacity;
-import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineCap;
-import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineColor;
-import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineJoin;
-import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineWidth;
 
 /**
  * Created by JongLim on 2018-03-09.
@@ -53,9 +41,9 @@ import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.lineWidth;
 
 public class MapBoxActivity extends FragmentActivity
         implements OnMapReadyCallback, MapboxMap.OnMapClickListener, MapboxMap.OnMarkerClickListener, CompoundButton.OnCheckedChangeListener {
-    private MapView mapView;
-    private MapboxMap mMap;
-    private Marker mMapMarker;
+    private MapView mMapView;
+    private MapboxMap mMapbox;
+    private Marker mMarker;
 
     private int tileSize = 256;
     private WMSTileProvider mProvider;
@@ -64,13 +52,12 @@ public class MapBoxActivity extends FragmentActivity
     private Switch mSwitchTug;
     private Switch mSwitchCargo;
     private Switch mSwitchTanker;
-    private MarkerInfoAdapter mInfoAdapter;
     private MarkerInfoHolder mPopupHolder;
-    private InfoWindow mInfoWindow;
 
     class MarkerInfoAdapter implements MapboxMap.InfoWindowAdapter {
         private View windowView;
 
+        @Nullable
         @Override
         public View getInfoWindow(@NonNull Marker marker) {
             return windowView;
@@ -86,9 +73,9 @@ public class MapBoxActivity extends FragmentActivity
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_mapbox);
 
-        mapView = (MapView) findViewById(R.id.mapView);
-        mapView.onCreate(savedInstanceState);
-        mapView.getMapAsync(this);
+        mMapView = (MapView) findViewById(R.id.mapView);
+        mMapView.onCreate(savedInstanceState);
+        mMapView.getMapAsync(this);
 
 
         mSwitchDef = findViewById(R.id.swShip);
@@ -104,43 +91,43 @@ public class MapBoxActivity extends FragmentActivity
     @Override
     public void onResume() {
         super.onResume();
-        mapView.onResume();
+        mMapView.onResume();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
-        mapView.onStart();
+        mMapView.onStart();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        mapView.onStop();
+        mMapView.onStop();
     }
 
     @Override
     public void onPause() {
         super.onPause();
-        mapView.onPause();
+        mMapView.onPause();
     }
 
     @Override
     public void onLowMemory() {
         super.onLowMemory();
-        mapView.onLowMemory();
+        mMapView.onLowMemory();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mapView.onDestroy();
+        mMapView.onDestroy();
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        mapView.onSaveInstanceState(outState);
+        mMapView.onSaveInstanceState(outState);
     }
 
     @Override
@@ -156,19 +143,18 @@ public class MapBoxActivity extends FragmentActivity
                         //URL geoJsonUrl = new URL("http://192.168.65.43:8080/geoserver/myWorkspace/wms?layers=myWorkspace:ais_shape&srs=EPSG:4326&format
                         // =application%2Fjson%3Btype%2Fgeojson");
                         GeoJsonSource urbanAreasSource = new GeoJsonSource("urban-areas", geoJsonUrl);
-                        mMap.addSource(urbanAreasSource);
+                        mMapbox.addSource(urbanAreasSource);
 
                         FillLayer urbanArea = new FillLayer("urban-areas-fill", "urban-areas");
-
                         urbanArea.setProperties(fillColor(Color.parseColor("#ff0088")), fillOpacity(0.4f));
 
-                        mMap.addLayerBelow(urbanArea, "water");
+                        mMapbox.addLayerBelow(urbanArea, "water");
                     } catch (MalformedURLException malformedUrlException) {
                         malformedUrlException.printStackTrace();
                     }
                 } else {
-                    mMap.removeLayer("urban-areas-fill");
-                    mMap.removeSource("urban-areas");
+                    mMapbox.removeLayer("urban-areas-fill");
+                    mMapbox.removeSource("urban-areas");
                 }
                 break;
             }
@@ -179,14 +165,14 @@ public class MapBoxActivity extends FragmentActivity
                     String tiles = WMSTileFactory.getMapboxTile(WMSTileFactory.cargo, tileSize);
                     TileSet ts = new TileSet("tileset", tiles);
                     RasterSource webMapSource = new RasterSource("web-map-source-cargo", ts, tileSize);
-                    mMap.addSource(webMapSource);
+                    mMapbox.addSource(webMapSource);
 
                     // Add the web map source to the map.
                     RasterLayer webMapLayer = new RasterLayer("web-map-layer-cargo", "web-map-source-cargo");
-                    mMap.addLayerBelow(webMapLayer, "aeroway-taxiway");
+                    mMapbox.addLayerBelow(webMapLayer, "aeroway-taxiway");
                 } else {
-                    mMap.removeLayer("web-map-layer-cargo");
-                    mMap.removeSource("web-map-source-cargo");
+                    mMapbox.removeLayer("web-map-layer-cargo");
+                    mMapbox.removeSource("web-map-source-cargo");
                 }
                 break;
             }
@@ -197,14 +183,14 @@ public class MapBoxActivity extends FragmentActivity
                     String tiles = WMSTileFactory.getMapboxTile(WMSTileFactory.tanker, tileSize);
                     TileSet ts = new TileSet("tileset", tiles);
                     RasterSource webMapSource = new RasterSource("web-map-source-tanker", ts, tileSize);
-                    mMap.addSource(webMapSource);
+                    mMapbox.addSource(webMapSource);
 
                     // Add the web map source to the map.
                     RasterLayer webMapLayer = new RasterLayer("web-map-layer-tanker", "web-map-source-tanker");
-                    mMap.addLayerBelow(webMapLayer, "aeroway-taxiway");
+                    mMapbox.addLayerBelow(webMapLayer, "aeroway-taxiway");
                 } else {
-                    mMap.removeLayer("web-map-layer-tanker");
-                    mMap.removeSource("web-map-source-tanker");
+                    mMapbox.removeLayer("web-map-layer-tanker");
+                    mMapbox.removeSource("web-map-source-tanker");
                 }
                 break;
             }
@@ -216,14 +202,14 @@ public class MapBoxActivity extends FragmentActivity
                     String tiles = WMSTileFactory.getMapboxTile(WMSTileFactory.vessels, tileSize);
                     TileSet ts = new TileSet("tileset", tiles);
                     RasterSource webMapSource = new RasterSource("web-map-source", ts, tileSize);
-                    mMap.addSource(webMapSource);
+                    mMapbox.addSource(webMapSource);
 
                     // Add the web map source to the map.
                     RasterLayer webMapLayer = new RasterLayer("web-map-layer", "web-map-source");
-                    mMap.addLayerBelow(webMapLayer, "aeroway-taxiway");
+                    mMapbox.addLayerBelow(webMapLayer, "aeroway-taxiway");
                 } else {
-                    mMap.removeLayer("web-map-layer");
-                    mMap.removeSource("web-map-source");
+                    mMapbox.removeLayer("web-map-layer");
+                    mMapbox.removeSource("web-map-source");
                 }
             }
         }
@@ -231,8 +217,10 @@ public class MapBoxActivity extends FragmentActivity
 
     @Override
     public void onMapReady(MapboxMap mapboxMap) {
-        mMap = mapboxMap;
-        mMap.addOnMapClickListener(this);
+        mMapbox = mapboxMap;
+        mMapbox.addOnMapClickListener(this);
+        mMapbox.setOnMarkerClickListener(this);
+
         mProvider = WMSTileFactory.getTileProvider(tileSize);
 
         onCheckedChanged(mSwitchDef, true);
@@ -240,22 +228,24 @@ public class MapBoxActivity extends FragmentActivity
 
     @Override
     public void onMapClick(@NonNull LatLng point) {
-        if (mMapMarker != null) {
-            mMap.removeMarker(mMapMarker);
-            mMapMarker.remove();
+        if (mMarker != null) {
+            mMapbox.removeMarker(mMarker);
+            mMarker.remove();
+            mMarker = null;
+            return;
         }
 
-        int zoomLevel = (int) mMap.getCameraPosition().zoom;
+        int zoomLevel = (int) mMapbox.getCameraPosition().zoom;
 
-        /** Get X,Y in meter unit */
+        /* Get X,Y in meter unit */
         int[] ret = mProvider.getBoundingBoxIJ(point, zoomLevel);
-        Log.v("JongLim", String.format("ZoomLevel = %d", zoomLevel));
-        Log.v("JongLim", String.format("XY inner box = (%d, %d)", ret[0], ret[1]));
+        //Log.v("JongLim", String.format("ZoomLevel = %d", zoomLevel));
+        //Log.v("JongLim", String.format("XY inner box = (%d, %d)", ret[0], ret[1]));
         //Log.v("JongLim", String.format("index of box = (%d, %d)", ret[2], ret[3]));
-        Log.v("JongLim", String.format("Click Point XY = (%d, %d)", ret[4], ret[5]));//the rang is -20037508.34 to 20037508.34
+        //Log.v("JongLim", String.format("Click Point XY = (%d, %d)", ret[4], ret[5]));//the rang is -20037508.34 to 20037508.34
 
         double[] bbox = mProvider.getBoundingBox(ret[2], ret[3], zoomLevel);
-        Log.v("JongLim", String.format("BBox Left/Bottom, Right/Top = (%.4f, %.4f, %.4f, %.4f)", bbox[0], bbox[1], bbox[2], bbox[3]));
+        //Log.v("JongLim", String.format("BBox Left/Bottom, Right/Top = (%.4f, %.4f, %.4f, %.4f)", bbox[0], bbox[1], bbox[2], bbox[3]));
 
         // resume ret array to store width & height
         ret[2] = ret[3] = tileSize;
@@ -279,16 +269,17 @@ public class MapBoxActivity extends FragmentActivity
 
     @Override
     public boolean onMarkerClick(@NonNull Marker marker) {
-        if (mMapMarker != null) {
-            mMapMarker.remove();
-            mMap.removeMarker(mMapMarker);
+        if (!marker.isInfoWindowShown()) {
+            mMapbox.selectMarker(mMarker);
+        } else {
+            mMapbox.deselectMarker(mMarker);
         }
         return true;
     }
 
     private void addMarker(Feature feature) {
         float[] point = feature.getGeometryCoordinate();
-        Log.d("JongLim", String.format("Features X,Y = (%f, %f)", point[0], point[1]));
+        //Log.d("JongLim", String.format("Features X,Y = (%f, %f)", point[0], point[1]));
 
         float lng = (float) WMSTileFactory.x2lon(point[0]);
         float lat = (float) WMSTileFactory.y2lat(point[1]);
@@ -296,19 +287,15 @@ public class MapBoxActivity extends FragmentActivity
         feature.setGeometryCoordinate(lng, lat);
 
         if (mPopupHolder == null) {
-            mPopupHolder = new MarkerInfoHolder(this);
+            mPopupHolder = new MarkerInfoHolder(this, null);
         }
         mPopupHolder.setBean(feature);
 
-        mInfoAdapter = new MarkerInfoAdapter();
-        mInfoAdapter.setWindowView(mPopupHolder.getRoot());
-        mMap.setInfoWindowAdapter(mInfoAdapter);
-
+        MarkerInfoAdapter infoAdapter = new MarkerInfoAdapter();
+        infoAdapter.setWindowView(mPopupHolder.getRoot());
+        mMapbox.setInfoWindowAdapter(infoAdapter);
         Icon icon = IconFactory.getInstance(this).fromResource(R.drawable.vessel_marker);
-        mMapMarker = mMap.addMarker(new MarkerOptions().position(latLng).icon(icon));
-        if (!mMapMarker.isInfoWindowShown()) {
-            mMapMarker.showInfoWindow(mMap, mapView);
-        }
-
+        mMarker = mMapbox.addMarker(new MarkerOptions().position(latLng).icon(icon));
+        mMapbox.selectMarker(mMarker);
     }
 }
