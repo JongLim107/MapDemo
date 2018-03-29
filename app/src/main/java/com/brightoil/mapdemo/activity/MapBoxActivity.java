@@ -23,6 +23,7 @@ import com.mapbox.mapboxsdk.maps.MapView;
 import com.mapbox.mapboxsdk.maps.MapboxMap;
 import com.mapbox.mapboxsdk.maps.OnMapReadyCallback;
 import com.mapbox.mapboxsdk.style.layers.FillLayer;
+import com.mapbox.mapboxsdk.style.layers.Layer;
 import com.mapbox.mapboxsdk.style.layers.RasterLayer;
 import com.mapbox.mapboxsdk.style.sources.GeoJsonSource;
 import com.mapbox.mapboxsdk.style.sources.RasterSource;
@@ -30,6 +31,7 @@ import com.mapbox.mapboxsdk.style.sources.TileSet;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
 
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.fillColor;
 import static com.mapbox.mapboxsdk.style.layers.PropertyFactory.fillOpacity;
@@ -49,9 +51,8 @@ public class MapBoxActivity extends FragmentActivity
     private WMSTileProvider mProvider;
 
     private Switch mSwitchDef;
-    private Switch mSwitchTug;
-    private Switch mSwitchCargo;
-    private Switch mSwitchTanker;
+    private ArrayList<String> layersList = new ArrayList<>();
+
     private MarkerInfoHolder mPopupHolder;
 
     class MarkerInfoAdapter implements MapboxMap.InfoWindowAdapter {
@@ -80,12 +81,12 @@ public class MapBoxActivity extends FragmentActivity
 
         mSwitchDef = findViewById(R.id.swShip);
         mSwitchDef.setOnCheckedChangeListener(this);
-        mSwitchTug = findViewById(R.id.swTug);
-        mSwitchTug.setOnCheckedChangeListener(this);
-        mSwitchCargo = findViewById(R.id.swCargo);
-        mSwitchCargo.setOnCheckedChangeListener(this);
-        mSwitchTanker = findViewById(R.id.swTanker);
-        mSwitchTanker.setOnCheckedChangeListener(this);
+        Switch switchTug = findViewById(R.id.swTug);
+        switchTug.setOnCheckedChangeListener(this);
+        Switch switchCargo = findViewById(R.id.swCargo);
+        switchCargo.setOnCheckedChangeListener(this);
+        Switch switchTanker = findViewById(R.id.swTanker);
+        switchTanker.setOnCheckedChangeListener(this);
     }
 
     @Override
@@ -137,9 +138,12 @@ public class MapBoxActivity extends FragmentActivity
 
             case R.id.swTug: {
                 /* GeoJsonSource */
-                if (mSwitchTug.isChecked()) {
+                if (b) {
                     try {
-                        URL geoJsonUrl = new URL("https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_urban_areas.geojson");
+                        //URL geoJsonUrl = new URL("https://d2ad6b4ur7yvpq.cloudfront.net/naturalearth-3.3.0/ne_50m_urban_areas.geojson");
+                        URL geoJsonUrl = new URL(
+                                "http://192.168.48.107:8080/geoserver/gis/ows?service=WFS&version=1.0.0&request=GetFeature&typeName=gis:live_sailing" +
+                                        "&maxFeatures=50&outputFormat=application/json");
                         //URL geoJsonUrl = new URL("http://192.168.65.43:8080/geoserver/myWorkspace/wms?layers=myWorkspace:ais_shape&srs=EPSG:4326&format
                         // =application%2Fjson%3Btype%2Fgeojson");
                         GeoJsonSource urbanAreasSource = new GeoJsonSource("urban-areas", geoJsonUrl);
@@ -148,69 +152,36 @@ public class MapBoxActivity extends FragmentActivity
                         FillLayer urbanArea = new FillLayer("urban-areas-fill", "urban-areas");
                         urbanArea.setProperties(fillColor(Color.parseColor("#ff0088")), fillOpacity(0.4f));
 
-                        mMapbox.addLayerBelow(urbanArea, "water");
+                        //mMapbox.addLayer(urbanArea);
+                        mMapbox.addLayerAbove(urbanArea, "water");
+                        layersList.add(0, WMSTileFactory.tug);
                     } catch (MalformedURLException malformedUrlException) {
                         malformedUrlException.printStackTrace();
                     }
+
                 } else {
                     mMapbox.removeLayer("urban-areas-fill");
                     mMapbox.removeSource("urban-areas");
+                    layersList.remove(WMSTileFactory.tug);
                 }
                 break;
             }
 
             case R.id.swCargo: {
                 /* RasterSource WmsSource */
-                if (mSwitchCargo.isChecked()) {
-                    String tiles = WMSTileFactory.getMapboxTile(WMSTileFactory.cargo, tileSize);
-                    TileSet ts = new TileSet("tileset", tiles);
-                    RasterSource webMapSource = new RasterSource("web-map-source-cargo", ts, tileSize);
-                    mMapbox.addSource(webMapSource);
-
-                    // Add the web map source to the map.
-                    RasterLayer webMapLayer = new RasterLayer("web-map-layer-cargo", "web-map-source-cargo");
-                    mMapbox.addLayerBelow(webMapLayer, "aeroway-taxiway");
-                } else {
-                    mMapbox.removeLayer("web-map-layer-cargo");
-                    mMapbox.removeSource("web-map-source-cargo");
-                }
+                addTileOverlay(WMSTileFactory.cargo, b);
                 break;
             }
 
             case R.id.swTanker: {
                 /* VectorSource */
-                if (mSwitchTanker.isChecked()) {
-                    String tiles = WMSTileFactory.getMapboxTile(WMSTileFactory.tanker, tileSize);
-                    TileSet ts = new TileSet("tileset", tiles);
-                    RasterSource webMapSource = new RasterSource("web-map-source-tanker", ts, tileSize);
-                    mMapbox.addSource(webMapSource);
-
-                    // Add the web map source to the map.
-                    RasterLayer webMapLayer = new RasterLayer("web-map-layer-tanker", "web-map-source-tanker");
-                    mMapbox.addLayerBelow(webMapLayer, "aeroway-taxiway");
-                } else {
-                    mMapbox.removeLayer("web-map-layer-tanker");
-                    mMapbox.removeSource("web-map-source-tanker");
-                }
+                addTileOverlay(WMSTileFactory.tanker, b);
                 break;
             }
 
             default: {
                 /* RasterSource WmsSource */
-                if (mSwitchDef.isChecked()) {
-
-                    String tiles = WMSTileFactory.getMapboxTile(WMSTileFactory.vessels, tileSize);
-                    TileSet ts = new TileSet("tileset", tiles);
-                    RasterSource webMapSource = new RasterSource("web-map-source", ts, tileSize);
-                    mMapbox.addSource(webMapSource);
-
-                    // Add the web map source to the map.
-                    RasterLayer webMapLayer = new RasterLayer("web-map-layer", "web-map-source");
-                    mMapbox.addLayerBelow(webMapLayer, "aeroway-taxiway");
-                } else {
-                    mMapbox.removeLayer("web-map-layer");
-                    mMapbox.removeSource("web-map-source");
-                }
+                addTileOverlay(WMSTileFactory.vessels, b);
             }
         }
     }
@@ -222,8 +193,7 @@ public class MapBoxActivity extends FragmentActivity
         mMapbox.setOnMarkerClickListener(this);
 
         mProvider = WMSTileFactory.getTileProvider(tileSize);
-
-        onCheckedChanged(mSwitchDef, true);
+        mSwitchDef.setChecked(true);
     }
 
     @Override
@@ -247,9 +217,14 @@ public class MapBoxActivity extends FragmentActivity
         double[] bbox = mProvider.getBoundingBox(ret[2], ret[3], zoomLevel);
         //Log.v("JongLim", String.format("BBox Left/Bottom, Right/Top = (%.4f, %.4f, %.4f, %.4f)", bbox[0], bbox[1], bbox[2], bbox[3]));
 
+        // get the top layer
+        if (layersList.isEmpty()) {
+            return;
+        }
+
         // resume ret array to store width & height
         ret[2] = ret[3] = tileSize;
-        MyRequestManager.getFeatureInfo(ret, bbox, new MyCallback<MapFeatureBean>(this, MapFeatureBean.class, "GetFeature Info...") {
+        MyRequestManager.getFeatureInfo(layersList.get(0), ret, bbox, new MyCallback<MapFeatureBean>(this, MapFeatureBean.class, "GetFeature Info...") {
             @Override
             public void onSucceed(MapFeatureBean body, int id) {
                 if (body != null && body.getFeatures().size() > 0) {
@@ -275,6 +250,33 @@ public class MapBoxActivity extends FragmentActivity
             mMapbox.deselectMarker(mMarker);
         }
         return true;
+    }
+
+    private void addTileOverlay(@WMSTileFactory.GeoLayers String layerName, boolean show) {
+        if (show) {
+            String tiles = WMSTileFactory.getMapboxTile(layerName, tileSize);
+            TileSet ts = new TileSet("tileset", tiles);
+            RasterSource webMapSource = new RasterSource("web-map-source-" + layerName, ts, tileSize);
+            mMapbox.addSource(webMapSource);
+
+            // Add the web map source to the map.
+            RasterLayer webMapLayer = new RasterLayer("web-map-layer-" + layerName, "web-map-source-" + layerName);
+            if (!layersList.isEmpty()) {
+                String ly = "web-map-layer-" + layersList.get(0);
+                Layer layer = mMapbox.getLayerAs(ly);
+                if (layer != null) {
+                    mMapbox.addLayerAbove(webMapLayer, ly);
+                    layersList.add(0, layerName);
+                    return;
+                }
+            }
+            mMapbox.addLayerAbove(webMapLayer, "aeroway-taxiway");
+            layersList.add(0, layerName);
+        } else {
+            mMapbox.removeLayer("web-map-layer-" + layerName);
+            mMapbox.removeSource("web-map-source-" + layerName);
+            layersList.remove(layerName);
+        }
     }
 
     private void addMarker(Feature feature) {

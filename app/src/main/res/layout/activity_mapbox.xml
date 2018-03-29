@@ -51,7 +51,6 @@
         android:layout_marginBottom="@dimen/view_padding"
         android:layout_marginRight="@dimen/item_padding"
         android:gravity="center"
-        android:checked="true"
         android:text="SHIP "/>
 
 

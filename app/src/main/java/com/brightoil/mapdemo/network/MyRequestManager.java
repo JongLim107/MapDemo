@@ -1,6 +1,7 @@
 package com.brightoil.mapdemo.network;
 
 import com.brightoil.mapdemo.action.Config;
+import com.brightoil.mapdemo.activity.WMSTileFactory;
 import com.zhy.http.okhttp.builder.PostFormBuilder;
 import com.zhy.http.okhttp.builder.PostStringBuilder;
 
@@ -47,9 +48,9 @@ public class MyRequestManager {
          mHandler.sendMessage(msg);
      }
      * */
-    public static void getFeatureInfo(int[] xy, double[] bbox, MyCallback callback){
+    public static void getFeatureInfo(@WMSTileFactory.GeoLayers String layer, int[] xy, double[] bbox, MyCallback callback){
         String url = Config.server + "&SERVICE=" + Config.service + "&VERSION=" + Config.ver1 + "&CRS=" + Config.CRS + "&REQUEST=" + Config.req + "&FORMAT="
-                + Config.format + "&TRANSPARENT=" + true + "&QUERY_LAYERS=" + Config.query_layer + "&LAYERS=" + Config.layer + "&TILED=" + true +
+                + Config.format + "&TRANSPARENT=" + true + "&QUERY_LAYERS=gis:" + layer + "&LAYERS=gis:" + layer + "&TILED=" + true +
                 "&INFO_FORMAT=" + Config.info_fmt + "&I=" + xy[0] + "&J=" + xy[1] + "&WIDTH=" + xy[2] + "&HEIGHT=" + xy[2] + "&BBOX=" + String
                 .format("%.4f,%.4f,%.4f,%.4f", bbox[0], bbox[1], bbox[2], bbox[3]);
 

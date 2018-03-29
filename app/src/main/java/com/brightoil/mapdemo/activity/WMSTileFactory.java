@@ -19,7 +19,7 @@ public class WMSTileFactory {
     static final String tug = "live_tug";
 
     @StringDef({vessels, tanker, cargo, tug})
-    private  @interface GeoLayers{}
+    public @interface GeoLayers{}
 
     //geo service for mapbox
     private static final String mapboxUrl = "http://192.168.48.107:8080/geoserver/gis/wms?service=WMS" +

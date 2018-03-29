@@ -41,8 +41,8 @@ public class MarkerInfoHolder {
         }
 
         ltvTitle.setText(bean.getFeatureName());
-        ltvLatitude.setText(String.format("%.2f", bean.getGeometryCoordinate()[0]));
-        ltvLongitude.setText(String.format("%.2f", bean.getGeometryCoordinate()[1]));
+        ltvLatitude.setText(String.format("%.4f", bean.getGeometryCoordinate()[0]));
+        ltvLongitude.setText(String.format("%.4f", bean.getGeometryCoordinate()[1]));
         ltvMmsi.setText(bean.getFeatureMmsi());
     }
 }

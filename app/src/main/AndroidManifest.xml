@@ -40,7 +40,8 @@
         <activity android:name="com.brightoil.mapdemo.activity.MapBoxActivity"/>
         <activity
             android:name="com.brightoil.mapdemo.activity.GgMapActivity"
-            android:label="@string/title_activity_maps">
+            android:label="@string/title_activity_maps"
+            android:theme="@style/AppTheme.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW"/>
                 <category android:name="android.intent.category.DEFAULT"/>

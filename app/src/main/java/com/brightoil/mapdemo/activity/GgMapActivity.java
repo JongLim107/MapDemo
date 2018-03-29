@@ -2,9 +2,11 @@ package com.brightoil.mapdemo.activity;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.FragmentActivity;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
+import android.widget.CompoundButton;
+import android.widget.Switch;
 
 import com.brightoil.mapdemo.bean.Feature;
 import com.brightoil.mapdemo.bean.MapFeatureBean;
@@ -21,15 +23,26 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.TileOverlay;
 import com.google.android.gms.maps.model.TileOverlayOptions;
 
-public class GgMapActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMapClickListener, GoogleMap.OnInfoWindowClickListener {
+import java.util.ArrayList;
+import java.util.HashMap;
+
+public class GgMapActivity extends AppCompatActivity
+        implements OnMapReadyCallback, GoogleMap.OnMapClickListener, GoogleMap.OnInfoWindowClickListener, CompoundButton.OnCheckedChangeListener {
 
     private GoogleMap mGoogleMap;
     private Marker mMarker;
     private WMSTileProvider mProvider;
     private MarkerInfoHolder mPopupHolder;
     private MarkerInfoWindowAdapter mInfoWindowAdapter;
+
+
+    private Switch mSwitchDef;
+
+    private final String LAY_KEY = "layer";
+    private ArrayList<HashMap<String, Object>> layersList= new ArrayList<>();
 
     private int tileSize = 256;
 
@@ -66,9 +79,20 @@ public class GgMapActivity extends FragmentActivity implements OnMapReadyCallbac
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.mapLayout);
         mapFragment.getMapAsync(this);
+
+        mSwitchDef = findViewById(R.id.swShip);
+        mSwitchDef.setOnCheckedChangeListener(this);
+        Switch switchTug = findViewById(R.id.swTug);
+        switchTug.setOnCheckedChangeListener(this);
+        Switch switchCargo = findViewById(R.id.swCargo);
+        switchCargo.setOnCheckedChangeListener(this);
+        Switch switchTanker = findViewById(R.id.swTanker);
+        switchTanker.setOnCheckedChangeListener(this);
+
 
         //获取唤醒参数
         OpenInstall.getWakeUp(getIntent(), wakeUpAdapter);
@@ -85,6 +109,31 @@ public class GgMapActivity extends FragmentActivity implements OnMapReadyCallbac
     protected void onDestroy() {
         super.onDestroy();
         wakeUpAdapter = null;
+    }
+
+    @Override
+    public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
+        switch (compoundButton.getId()) {
+
+            case R.id.swTug: {
+                addTileOverlay(WMSTileFactory.tug, b);
+                break;
+            }
+
+            case R.id.swCargo: {
+                addTileOverlay(WMSTileFactory.cargo, b);
+                break;
+            }
+
+            case R.id.swTanker: {
+                addTileOverlay(WMSTileFactory.tanker, b);
+                break;
+            }
+
+            default: {
+                addTileOverlay(WMSTileFactory.vessels, b);
+            }
+        }
     }
 
     /**
@@ -107,15 +156,9 @@ public class GgMapActivity extends FragmentActivity implements OnMapReadyCallbac
         mGoogleMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Center"));
         mGoogleMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));*/
 
-        mProvider = WMSTileFactory.getTileProvider(WMSTileFactory.vessels, tileSize);
-        mGoogleMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
-
-        mGoogleMap.addTileOverlay(new TileOverlayOptions().tileProvider(WMSTileFactory.getTileProvider(WMSTileFactory.tanker, tileSize)));
-        mGoogleMap.addTileOverlay(new TileOverlayOptions().tileProvider(WMSTileFactory.getTileProvider(WMSTileFactory.cargo, tileSize)));
-        mGoogleMap.addTileOverlay(new TileOverlayOptions().tileProvider(WMSTileFactory.getTileProvider(WMSTileFactory.tug, tileSize)));
-
         mGoogleMap.setOnMapClickListener(this);
         mGoogleMap.setOnInfoWindowClickListener(this);
+        mSwitchDef.setChecked(true);
     }
 
     @Override
@@ -140,7 +183,13 @@ public class GgMapActivity extends FragmentActivity implements OnMapReadyCallbac
 
         // resume ret array to store width & height
         ret[2] = ret[3] = tileSize;
-        MyRequestManager.getFeatureInfo(ret, bbox, new MyCallback<MapFeatureBean>(this, MapFeatureBean.class, "GetFeature Info...") {
+
+        //get top layer
+        if (layersList.isEmpty())
+            return;
+
+        HashMap map = layersList.get(0);
+        MyRequestManager.getFeatureInfo((String) map.get(LAY_KEY), ret, bbox, new MyCallback<MapFeatureBean>(this, MapFeatureBean.class, "GetFeature Info...") {
             @Override
             public void onSucceed(MapFeatureBean body, int id) {
                 if (body != null && body.getFeatures().size() > 0) {
@@ -163,6 +212,33 @@ public class GgMapActivity extends FragmentActivity implements OnMapReadyCallbac
         if (mMarker != null) {
             mMarker.remove();
             mMarker = null;
+        }
+    }
+
+    private void addTileOverlay(@WMSTileFactory.GeoLayers String layerName, boolean show) {
+        String LAY_TILE = "tile_object";
+        if (show) {
+            mProvider = WMSTileFactory.getTileProvider(layerName, tileSize);
+            TileOverlay t = mGoogleMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
+
+            HashMap<String, Object> map = new HashMap<>();
+            map.put(LAY_KEY, layerName);
+            map.put(LAY_TILE, t);
+            layersList.add(0, map);
+
+        } else if (!layersList.isEmpty()) {
+
+            for (HashMap map : layersList){
+                if (layerName.equals(map.get(LAY_KEY))){
+                    TileOverlay t = (TileOverlay) map.get(LAY_TILE);
+                    if (t != null) {
+                        t.setVisible(false);
+                        t.remove();
+                        layersList.remove(map);
+                        break;
+                    }
+                }
+            }
         }
     }
 
