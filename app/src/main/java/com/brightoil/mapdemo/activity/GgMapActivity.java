@@ -8,8 +8,8 @@ import android.view.View;
 import android.widget.CompoundButton;
 import android.widget.Switch;
 
-import com.brightoil.mapdemo.bean.Feature;
-import com.brightoil.mapdemo.bean.MapFeatureBean;
+import com.brightoil.mapdemo.bean.MapFeature;
+import com.brightoil.mapdemo.bean.MapGeoJson;
 import com.brightoil.mapdemo.network.MyCallback;
 import com.brightoil.mapdemo.network.MyRequestManager;
 import com.fm.openinstall.OpenInstall;
@@ -189,11 +189,11 @@ public class GgMapActivity extends AppCompatActivity
             return;
 
         HashMap map = layersList.get(0);
-        MyRequestManager.getFeatureInfo((String) map.get(LAY_KEY), ret, bbox, new MyCallback<MapFeatureBean>(this, MapFeatureBean.class, "GetFeature Info...") {
+        MyRequestManager.getFeatureInfo((String) map.get(LAY_KEY), ret, bbox, new MyCallback<MapGeoJson>(this, MapGeoJson.class, "GetFeature Info...") {
             @Override
-            public void onSucceed(MapFeatureBean body, int id) {
+            public void onSucceed(MapGeoJson body, int id) {
                 if (body != null && body.getFeatures().size() > 0) {
-                    Feature feature = body.getFeatures().get(0);
+                    MapFeature feature = body.getFeatures().get(0);
                     if (feature != null) {
                         addMarker(feature);
                     }
@@ -218,7 +218,7 @@ public class GgMapActivity extends AppCompatActivity
     private void addTileOverlay(@WMSTileFactory.GeoLayers String layerName, boolean show) {
         String LAY_TILE = "tile_object";
         if (show) {
-            mProvider = WMSTileFactory.getTileProvider(layerName, tileSize);
+            mProvider = WMSTileFactory.getTileProvider(layerName, tileSize, "image/png");
             TileOverlay t = mGoogleMap.addTileOverlay(new TileOverlayOptions().tileProvider(mProvider));
 
             HashMap<String, Object> map = new HashMap<>();
@@ -242,7 +242,7 @@ public class GgMapActivity extends AppCompatActivity
         }
     }
 
-    private void addMarker(Feature feature) {
+    private void addMarker(MapFeature feature) {
         float[] point = feature.getGeometryCoordinate();
         //Log.d("JongLim", String.format("Features X,Y = (%f, %f)", point[0], point[1]));
 

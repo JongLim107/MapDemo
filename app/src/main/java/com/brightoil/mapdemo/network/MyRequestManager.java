@@ -57,4 +57,7 @@ public class MyRequestManager {
         getBuilder("", url).build().execute(callback);
     }
 
+    public static void getFeatureList(String url, MyCallback callback){
+        getBuilder("", url).build().execute(callback);
+    }
 }

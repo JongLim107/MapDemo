@@ -17,18 +17,28 @@ public class WMSTileFactory {
     static final String tanker = "live_tanker";
     static final String cargo = "live_cargo";
     static final String tug = "live_tug";
+    static final String pax = "live_passenger";
 
-    @StringDef({vessels, tanker, cargo, tug})
+    @StringDef({vessels, tanker, cargo, tug, pax})
     public @interface GeoLayers{}
 
     //geo service for mapbox
+    private static final String geoJsonUrl = "http://192.168.48.107:8080/geoserver/gis/wms?service=WMS" +
+            "&version=1.1.0&request=GetMap" +
+            "&layers=gis:%s" +
+            "&width=%d&height=%d" +
+            "&bbox=-180.0,-90.0,180.0,90.0" +
+            "&srs=EPSG:4326" +
+            "&format=application/json;type=geojson";
+
+    //geoJson for mapbox
     private static final String mapboxUrl = "http://192.168.48.107:8080/geoserver/gis/wms?service=WMS" +
             "&version=1.1.0&request=GetMap" +
             "&layers=gis:%s" +
             "&width=%d&height=%d" +
             "&bbox={bbox-epsg-3857}" +
             "&srs=EPSG:3857" +
-            "&format=image/png" +
+            "&format=%s" +
             "&transparent=true";
 
     // This is configured for: OUR OWN service.
@@ -39,13 +49,17 @@ public class WMSTileFactory {
             "&bbox=%f,%f,%f,%f" +
             "&width=%d&height=%d" +
             "&srs=EPSG:3857" +
-            "&format=image/png" +
+            "&format=%s" +
             "&transparent=true";
 
-
-    public static String getMapboxTile(@GeoLayers String layer, int xy_size){
-        return String.format(mapboxUrl, layer, xy_size, xy_size);
+    public static String getMapboxTile(@GeoLayers String layer, int xy_size, String format){
+        return String.format(mapboxUrl, layer, xy_size, xy_size, format);
     }
+
+    public static String getGeoJsonUrl(@GeoLayers String layer, int xy_size){
+        return String.format(geoJsonUrl, layer, xy_size, xy_size);
+    }
+
 
     public static WMSTileProvider getTileProvider(int xy) {
         return new WMSTileProvider(xy, xy) {
@@ -56,7 +70,7 @@ public class WMSTileFactory {
         };
     }
 
-    public static WMSTileProvider getTileProvider(@GeoLayers String layer, int xy) {
+    public static WMSTileProvider getTileProvider(@GeoLayers String layer, int xy, final String format) {
         final String layerName = layer;
         return new WMSTileProvider(xy, xy) {
             @Override
@@ -64,7 +78,7 @@ public class WMSTileFactory {
                 final double[] bbox = getBoundingBox(x, y, zoom);
                 Log.d("JongLim", String.format("(x, y, zoom) = (%d, %d, %d)", x, y, zoom));
                 /* Define the url pattern for the tile images */
-                String s = String.format(Locale.US, GM_WMS_FORMAT, layerName, bbox[MINX], bbox[MINY], bbox[MAXX], bbox[MAXY], width, height);
+                String s = String.format(Locale.US, GM_WMS_FORMAT, layerName, bbox[MINX], bbox[MINY], bbox[MAXX], bbox[MAXY], width, height, format);
                 Log.d("JongLim", s);
                 try {
                     return new URL(s);

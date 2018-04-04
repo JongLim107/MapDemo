@@ -8,7 +8,7 @@ import java.util.ArrayList;
  * Created by JongLim on 2018-03-08.
  */
 
-public class MapFeatureBean {
+public class MapGeoJson {
 
     private class Crs {
 
@@ -23,7 +23,7 @@ public class MapFeatureBean {
 
     private String type;
     private String totalFeatures;
-    private ArrayList<Feature> features;
+    private ArrayList<MapFeature> features;
     private Crs crs;
 
     public String getType() {
@@ -34,7 +34,7 @@ public class MapFeatureBean {
         return totalFeatures;
     }
 
-    public ArrayList<Feature> getFeatures() {
+    public ArrayList<MapFeature> getFeatures() {
         return features;
     }
 

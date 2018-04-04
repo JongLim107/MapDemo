@@ -6,7 +6,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 
-import com.brightoil.mapdemo.bean.Feature;
+import com.brightoil.mapdemo.bean.MapFeature;
 import com.brightoil.mapdemo.widgets.LabelTextView;
 
 /**
@@ -35,14 +35,14 @@ public class MarkerInfoHolder {
         return root;
     }
 
-    public void setBean(Feature bean) {
+    public void setBean(MapFeature bean) {
         if (bean == null) {
             return;
         }
 
-        ltvTitle.setText(bean.getFeatureName());
+        ltvTitle.setText(bean.getStringProperty("name"));
         ltvLatitude.setText(String.format("%.4f", bean.getGeometryCoordinate()[0]));
         ltvLongitude.setText(String.format("%.4f", bean.getGeometryCoordinate()[1]));
-        ltvMmsi.setText(bean.getFeatureMmsi());
+        ltvMmsi.setText(bean.getStringProperty("mmsi"));
     }
 }

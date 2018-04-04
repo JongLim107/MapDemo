@@ -20,7 +20,7 @@ import okhttp3.Response;
  */
 
 public abstract class MyCallback<T> extends Callback<T> {
-    private Class<T> clazz;
+    Class<T> clazz;
     private MyProgressDialog mLoadingDialog;
 
     /**
@@ -71,7 +71,7 @@ public abstract class MyCallback<T> extends Callback<T> {
     @Override
     public void onResponse(T response, int id) {
         dismissDialog();
-        if (response == null){
+        if (response == null) {
             onFailed("Response is empty", -1, id);
         } else {
             onSucceed(response, id);
