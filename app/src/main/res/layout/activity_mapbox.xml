@@ -9,49 +9,11 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"/>
 
-    <Switch
-        android:id="@+id/swTug"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/swCargo"
-        android:layout_alignParentRight="true"
-        android:layout_marginBottom="@dimen/view_padding"
-        android:layout_marginRight="@dimen/item_padding"
-        android:gravity="center"
-        android:text="GeoJson"/>
-
-    <Switch
-        android:id="@+id/swCargo"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/swTanker"
-        android:layout_alignParentRight="true"
-        android:layout_marginBottom="@dimen/view_padding"
-        android:layout_marginRight="@dimen/item_padding"
-        android:gravity="center"
-        android:text="CARGO"/>
-
-    <Switch
-        android:id="@+id/swTanker"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/swShip"
-        android:layout_alignParentRight="true"
-        android:layout_marginBottom="@dimen/view_padding"
-        android:layout_marginRight="@dimen/item_padding"
-        android:gravity="center"
-        android:text="TANKER"/>
-
-    <Switch
-        android:id="@+id/swShip"
+    <include
+        layout="@layout/switch_btn_layout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_marginBottom="@dimen/view_padding"
-        android:layout_marginRight="@dimen/item_padding"
-        android:gravity="center"
-        android:text="SHIP"/>
-
+        android:layout_alignParentRight="true"/>
 
 </RelativeLayout>

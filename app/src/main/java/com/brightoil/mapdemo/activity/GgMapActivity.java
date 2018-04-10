@@ -28,6 +28,7 @@ import com.google.android.gms.maps.model.TileOverlayOptions;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class GgMapActivity extends AppCompatActivity
         implements OnMapReadyCallback, GoogleMap.OnMapClickListener, GoogleMap.OnInfoWindowClickListener, CompoundButton.OnCheckedChangeListener {
@@ -42,7 +43,7 @@ public class GgMapActivity extends AppCompatActivity
     private Switch mSwitchDef;
 
     private final String LAY_KEY = "layer";
-    private ArrayList<HashMap<String, Object>> layersList= new ArrayList<>();
+    private ArrayList<HashMap<String, Object>> layersList = new ArrayList<>();
 
     private int tileSize = 256;
 
@@ -113,26 +114,14 @@ public class GgMapActivity extends AppCompatActivity
 
     @Override
     public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-        switch (compoundButton.getId()) {
-
-            case R.id.swTug: {
-                addTileOverlay(WMSTileFactory.tug, b);
-                break;
-            }
-
-            case R.id.swCargo: {
-                addTileOverlay(WMSTileFactory.cargo, b);
-                break;
-            }
-
-            case R.id.swTanker: {
-                addTileOverlay(WMSTileFactory.tanker, b);
-                break;
-            }
-
-            default: {
-                addTileOverlay(WMSTileFactory.vessels, b);
-            }
+        if (compoundButton.getId() == R.id.swTug) {
+            addTileOverlay(WMSTileFactory.tug, b);
+        } else if (compoundButton.getId() == R.id.swCargo) {
+            addTileOverlay(WMSTileFactory.cargo, b);
+        } else if (compoundButton.getId() == R.id.swTanker) {
+            addTileOverlay(WMSTileFactory.tanker, b);
+        } else {
+            addTileOverlay(WMSTileFactory.vessels, b);
         }
     }
 
@@ -185,8 +174,9 @@ public class GgMapActivity extends AppCompatActivity
         ret[2] = ret[3] = tileSize;
 
         //get top layer
-        if (layersList.isEmpty())
+        if (layersList.isEmpty()) {
             return;
+        }
 
         HashMap map = layersList.get(0);
         MyRequestManager.getFeatureInfo((String) map.get(LAY_KEY), ret, bbox, new MyCallback<MapGeoJson>(this, MapGeoJson.class, "GetFeature Info...") {
@@ -215,6 +205,42 @@ public class GgMapActivity extends AppCompatActivity
         }
     }
 
+    private void addSymbolLayer(@WMSTileFactory.GeoLayers final String layerName, boolean show) {
+        String LAY_TILE = "tile_object";
+        if (show) {
+
+            String geoJsonUrl = WMSTileFactory.getGeoJsonUrl(layerName, tileSize);
+            MyRequestManager.getFeatureList(geoJsonUrl, new MyCallback<MapGeoJson>(this, MapGeoJson.class, "Loading...") {
+                @Override
+                public void onSucceed(MapGeoJson list, int id) {
+
+                    if (list != null && list.getFeatures() != null && list.getFeatures().size() > 0) {
+
+                    }
+                }
+
+                @Override
+                public void onFailed(String exception, int code, int id) {
+                    Log.e("JongLim", String.format("Call Failed, exception = %s, code = %d, id = %d", exception, code, id));
+                }
+            });
+
+        } else if (!layersList.isEmpty()) {
+
+            for (HashMap map : layersList) {
+                if (layerName.equals(map.get(LAY_KEY))) {
+                    TileOverlay t = (TileOverlay) map.get(LAY_TILE);
+                    if (t != null) {
+                        t.setVisible(false);
+                        t.remove();
+                        layersList.remove(map);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     private void addTileOverlay(@WMSTileFactory.GeoLayers String layerName, boolean show) {
         String LAY_TILE = "tile_object";
         if (show) {
@@ -228,8 +254,8 @@ public class GgMapActivity extends AppCompatActivity
 
         } else if (!layersList.isEmpty()) {
 
-            for (HashMap map : layersList){
-                if (layerName.equals(map.get(LAY_KEY))){
+            for (HashMap map : layersList) {
+                if (layerName.equals(map.get(LAY_KEY))) {
                     TileOverlay t = (TileOverlay) map.get(LAY_TILE);
                     if (t != null) {
                         t.setVisible(false);

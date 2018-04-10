@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_gravity="right|bottom">
+
+    <Switch
+        android:id="@+id/swTug"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/swCargo"
+        android:layout_gravity="right"
+        android:layout_marginBottom="@dimen/view_padding"
+        android:layout_marginRight="@dimen/item_padding"
+        android:gravity="center"
+        android:text="GeoJson"/>
+
+    <Switch
+        android:id="@+id/swCargo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/swTanker"
+        android:layout_gravity="right"
+        android:layout_marginBottom="@dimen/view_padding"
+        android:layout_marginRight="@dimen/item_padding"
+        android:gravity="center"
+        android:text="CARGO"/>
+
+    <Switch
+        android:id="@+id/swTanker"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/swShip"
+        android:layout_gravity="right"
+        android:layout_marginBottom="@dimen/view_padding"
+        android:layout_marginRight="@dimen/item_padding"
+        android:gravity="center"
+        android:text="TANKER"/>
+
+    <Switch
+        android:id="@+id/swShip"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="right"
+        android:layout_marginBottom="@dimen/view_padding"
+        android:layout_marginRight="@dimen/item_padding"
+        android:gravity="center"
+        android:text="SHIP"/>
+
+</LinearLayout>

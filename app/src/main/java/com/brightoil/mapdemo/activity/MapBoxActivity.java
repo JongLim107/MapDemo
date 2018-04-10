@@ -136,29 +136,17 @@ public class MapBoxActivity extends FragmentActivity
         mMapView.onSaveInstanceState(outState);
     }
 
+
     @Override
     public void onCheckedChanged(CompoundButton compoundButton, boolean b) {
-
-        switch (compoundButton.getId()) {
-
-            case R.id.swTug: {
-                addSymbolLayer(WMSTileFactory.pax, b);
-                break;
-            }
-
-            case R.id.swCargo: {
-                addTileOverlay(WMSTileFactory.cargo, b);
-                break;
-            }
-
-            case R.id.swTanker: {
-                addTileOverlay(WMSTileFactory.tanker, b);
-                break;
-            }
-
-            default: {
-                addTileOverlay(WMSTileFactory.vessels, b);
-            }
+        if (compoundButton.getId() == R.id.swTug) {
+            addSymbolLayer(WMSTileFactory.pax, b);
+        } else if (compoundButton.getId() == R.id.swCargo) {
+            addTileOverlay(WMSTileFactory.cargo, b);
+        } else if (compoundButton.getId() == R.id.swTanker) {
+            addTileOverlay(WMSTileFactory.tanker, b);
+        } else {
+            addTileOverlay(WMSTileFactory.vessels, b);
         }
     }
 
@@ -175,10 +163,21 @@ public class MapBoxActivity extends FragmentActivity
 
     @Override
     public void onMapClick(@NonNull LatLng point) {
+        /** if click on the symbolLayer, just show the info windows. no need to call network api. */
+        if (((Objects.equals(layerIds.get(0), WMSTileFactory.pax)))) {
+            PointF screenPoint = mMapbox.getProjection().toScreenLocation(point);
+            String[] layerIdsArray = layerIds.toArray(new String[layerIds.size()]);
+            List<Feature> features = mMapbox.queryRenderedFeatures(screenPoint, layerIdsArray);
+            if (!features.isEmpty()) {
+                addMarker(features.get(0));
+                return;
+            }
+        }
+
+
         /** if the markerInfoView is showing, dismiss it. */
         if (mMarker != null) {
             mMapbox.removeMarker(mMarker);
-            mMarker.remove();
             mMarker = null;
             return;
         }
@@ -187,19 +186,6 @@ public class MapBoxActivity extends FragmentActivity
         /** get the top layer. if it was empty , do nothing. */
         if (layerIds.isEmpty()) {
             return;
-        }
-
-
-        /** if click on the symbolLayer, just show the info windows. no need to call network api. */
-        if (((Objects.equals(layerIds.get(0), WMSTileFactory.pax)))) {
-            PointF screenPoint = mMapbox.getProjection().toScreenLocation(point);
-            String[] layerIdsArray = layerIds.toArray(new String[layerIds.size()]);
-            List<Feature> features = mMapbox.queryRenderedFeatures(screenPoint, layerIdsArray);
-            if (!features.isEmpty()) {
-                JLLog.showToast(MapBoxActivity.this, "hello from: " + features.get(0).getStringProperty("name"));
-                addMarker(features.get(0));
-                return;
-            }
         }
 
 
